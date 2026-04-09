@@ -1,8 +1,8 @@
 ﻿namespace SnapFile.Application.Auth.DTOs
 {
-    public class LoginDto
+    public class ConfirmEmailDto
     {
         public string Email { get; set; }
-        public string Password { get; set; }
+        public string Code { get; set; }
     }
 }

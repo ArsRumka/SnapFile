@@ -31,11 +31,18 @@ namespace SnapFile.Domain.Entities
         [Phone(ErrorMessage = "Invalid phone number format")]
         public string Phone { get; set; }
 
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        public bool IsEmailConfirmed { get; set; } = false;
+
         public bool IsAdmin { get; set; }= false;
 
         [Required]
         public string PasswordHash { get; set; }
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public string FullName => $"{LastName} {FirstName} {MiddleName}".Trim();
     }

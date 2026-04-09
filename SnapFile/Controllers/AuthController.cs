@@ -42,6 +42,27 @@ namespace SnapFile.Controllers
             });
         }
 
+        [HttpPost("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(ConfirmEmailDto dto)
+        {
+            await _auth.ConfirmEmail(dto);
+            return Ok();
+        }
+
+        [HttpPost("request-reset")]
+        public async Task<IActionResult> RequestReset(string email)
+        {
+            await _auth.RequestReset(email);
+            return Ok();
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
+        {
+            await _auth.ResetPassword(dto);
+            return Ok();
+        }
+
         [Authorize]
         [HttpGet("me")]
         public IActionResult Me()
