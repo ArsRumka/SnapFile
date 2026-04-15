@@ -23,6 +23,14 @@ builder.Services.AddAutoMapper(cfg => { },
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IPositionRepository, PositionRepository>();
+builder.Services.AddScoped<IFormulationRepository, FormulationRepository>();
+builder.Services.AddScoped<IRequestTypeRepository, RequestTypeRepository>();
+builder.Services.AddScoped<ITemplateRepository, TemplateRepository>();
+builder.Services.AddScoped<ITemplateVariableRepository, TemplateVariableRepository>();
+builder.Services.AddScoped<ITemplateApproverRepository, TemplateApproverRepository>();
+builder.Services.AddScoped<IRequestRepository, RequestRepository>();
+builder.Services.AddScoped<IRequestValueRepository, RequestValueRepository>();
+builder.Services.AddScoped<IRequestApproverRepository, RequestApproverRepository>();
 
 builder.Services.AddHostedService<CleanupService>();
 builder.Services.AddScoped<AuthService>();
@@ -30,6 +38,14 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPositionService, PositionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IFormulationService, FormulationService>();
+builder.Services.AddScoped<IRequestTypeService, RequestTypeService>();
+builder.Services.AddScoped<ITemplateService, TemplateService>();
+builder.Services.AddScoped<ITemplateVariableService, TemplateVariableService>();
+builder.Services.AddScoped<ITemplateApproverService, TemplateApproverService>();
+builder.Services.AddScoped<IRequestService, RequestService>();
+builder.Services.AddScoped<IRequestValueService, RequestValueService>();
+builder.Services.AddScoped<IRequestApproverService, RequestApproverService>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<JwtService>();
