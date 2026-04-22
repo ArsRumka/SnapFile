@@ -71,6 +71,7 @@ namespace SnapFile.Controllers
             {
                 Id = User.FindFirst("id")?.Value,
                 FullName = User.FindFirst("fullName")?.Value,
+                IsAdmin = User.FindFirst("isAdmin")?.Value == "True",
                 Role = User.FindFirst("role")?.Value
             };
 

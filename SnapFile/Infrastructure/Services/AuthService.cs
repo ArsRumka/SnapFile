@@ -50,6 +50,8 @@ namespace SnapFile.Infrastructure.Services
                 existingUser.LastName = dto.LastName;
                 existingUser.MiddleName = dto.MiddleName;
                 existingUser.Phone = dto.Phone;
+                existingUser.PositionId = dto.PositionId;
+                existingUser.DepartmentId = dto.DepartmentId;
                 existingUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             }
             else
@@ -61,7 +63,12 @@ namespace SnapFile.Infrastructure.Services
                     LastName = dto.LastName,
                     MiddleName = dto.MiddleName,
                     Phone = dto.Phone,
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+                    PositionId = dto.PositionId,
+                    DepartmentId = dto.DepartmentId,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                    IsEmailConfirmed = false,
+                    IsAdmin = false,
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 _db.Users.Add(user);
@@ -73,7 +80,10 @@ namespace SnapFile.Infrastructure.Services
             {
                 Email = dto.Email,
                 Code = code,
-                ExpireAt = DateTime.UtcNow.AddMinutes(10)
+                ExpireAt = DateTime.UtcNow.AddMinutes(10),
+                CreatedAt = DateTime.UtcNow,
+                IsUsed = false,
+                Attempts = 0
             });
 
             await _db.SaveChangesAsync();
@@ -83,20 +93,64 @@ namespace SnapFile.Infrastructure.Services
 
         public async Task RegisterAdmin(RegisterDto dto)
         {
-            var user = new User
+            // Проверяем, существует ли пользователь с таким email
+            var existingUser = await _db.Users
+                .FirstOrDefaultAsync(x => x.Email == dto.Email);
+
+            if (existingUser != null)
             {
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                MiddleName = dto.MiddleName,
-                Phone = dto.Phone,
-                PositionId = dto.PositionId,
-                DepartmentId = dto.DepartmentId,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                IsAdmin = true
-            };
-            _db.Users.Add(user);
+                if (existingUser.IsEmailConfirmed)
+                    throw new Exception("Email already in use");
+
+                // Обновляем данные существующего пользователя
+                existingUser.FirstName = dto.FirstName;
+                existingUser.LastName = dto.LastName;
+                existingUser.MiddleName = dto.MiddleName;
+                existingUser.Phone = dto.Phone;
+                existingUser.PositionId = dto.PositionId;
+                existingUser.DepartmentId = dto.DepartmentId;
+                existingUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+                existingUser.IsAdmin = true;
+            }
+            else
+            {
+                var user = new User
+                {
+                    Email = dto.Email,  // ← Устанавливаем Email
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    MiddleName = dto.MiddleName,
+                    Phone = dto.Phone,
+                    PositionId = dto.PositionId,
+                    DepartmentId = dto.DepartmentId,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                    IsEmailConfirmed = false,  // ← Требуется подтверждение
+                    IsAdmin = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.Users.Add(user);
+            }
+
+            // Генерируем код подтверждения
+            var code = GenerateCode();
+
+            _db.EmailCodes.Add(new EmailCode
+            {
+                Email = dto.Email,
+                Code = code,
+                ExpireAt = DateTime.UtcNow.AddMinutes(10),
+                CreatedAt = DateTime.UtcNow,
+                IsUsed = false,
+                Attempts = 0
+            });
+
             await _db.SaveChangesAsync();
+
+            // Отправляем код на email
+            await _email.SendCode(dto.Email, code);
         }
+
         public async Task ConfirmEmail(ConfirmEmailDto dto)
         {
             var code = await _db.EmailCodes
@@ -137,7 +191,10 @@ namespace SnapFile.Infrastructure.Services
             {
                 Email = email,
                 Code = code,
-                ExpireAt = DateTime.UtcNow.AddMinutes(10)
+                ExpireAt = DateTime.UtcNow.AddMinutes(10),
+                CreatedAt = DateTime.UtcNow,
+                IsUsed = false,
+                Attempts = 0
             });
 
             await _db.SaveChangesAsync();
@@ -156,7 +213,11 @@ namespace SnapFile.Infrastructure.Services
                 throw new Exception("Invalid or expired code");
 
             if (code.Code != dto.Code)
+            {
+                code.Attempts++;
+                await _db.SaveChangesAsync();
                 throw new Exception("Invalid code");
+            }
 
             var user = await _db.Users.FirstAsync(x => x.Email == dto.Email);
 
@@ -168,6 +229,13 @@ namespace SnapFile.Infrastructure.Services
 
         public async Task ResendCode(string email)
         {
+            var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == email);
+            if (user == null)
+                throw new Exception("User not found");
+
+            if (user.IsEmailConfirmed)
+                throw new Exception("Email already confirmed");
+
             var lastCode = await _db.EmailCodes
                 .Where(x => x.Email == email)
                 .OrderByDescending(x => x.CreatedAt)
@@ -182,7 +250,10 @@ namespace SnapFile.Infrastructure.Services
             {
                 Email = email,
                 Code = code,
-                ExpireAt = DateTime.UtcNow.AddMinutes(10)
+                ExpireAt = DateTime.UtcNow.AddMinutes(10),
+                CreatedAt = DateTime.UtcNow,
+                IsUsed = false,
+                Attempts = 0
             });
 
             await _db.SaveChangesAsync();
@@ -192,7 +263,7 @@ namespace SnapFile.Infrastructure.Services
 
         private string GenerateCode()
         {
-            using var rng = new RNGCryptoServiceProvider();
+            using var rng = RandomNumberGenerator.Create();
             var bytes = new byte[4];
             rng.GetBytes(bytes);
 

@@ -113,7 +113,26 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Добавить CORS политику
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        });
+});
+
+// ... остальная конфигурация
+
 var app = builder.Build();
+
+// Включить CORS (ВАЖНО: до UseAuthorization и UseEndpoints)
+app.UseCors("AllowFrontend");
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -31,6 +31,7 @@ namespace SnapFile.Application.Auth.Services
             {
             new Claim("id", user.Id.ToString()),
             new Claim("fullName", user.FullName),
+            new Claim("isAdmin", user.IsAdmin.ToString()),
             new Claim("role", user.IsAdmin ? "Admin" : "User")
         };
 

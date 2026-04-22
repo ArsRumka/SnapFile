@@ -31,7 +31,7 @@ namespace SnapFile.Application.Services.Implementations
             return _mapper.Map<PositionDto>(position);
         }
 
-        public async Task<PositionDto> CreateAsync(PositionDto dto)
+        public async Task<PositionDto> CreateAsync(PositionCreateDto dto)
         {
             var position = _mapper.Map<Position>(dto);
             var created = await _repository.CreateAsync(position);

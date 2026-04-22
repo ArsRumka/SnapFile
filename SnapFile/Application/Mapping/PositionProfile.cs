@@ -11,6 +11,7 @@ namespace SnapFile.Application.Mapping
         {
             CreateMap<Position, PositionDto>();
             CreateMap<PositionDto, Position>();
+            CreateMap<PositionCreateDto, Position>();
 
             CreateMap<UpdatePositionDto, Position>();
 
